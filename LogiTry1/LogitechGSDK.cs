@@ -5,7 +5,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 
-namespace LogiTry1
+namespace ComPortsWatcher
 {
     public class LogitechGSDK
     {
@@ -64,11 +64,11 @@ namespace LogiTry1
             LcdShow();
         }
 
-        public void LcdUpdate(string[] lcdStrings)
+        public void LcdUpdate(List<string> lcdStrings)
         {
             if (!Enumerable.SequenceEqual(LcdBaseStrings, lcdStrings))
             {
-                LcdBaseStrings = (string[])lcdStrings.Clone();
+                LcdBaseStrings = (string[])lcdStrings.ToArray().Clone();
                 LcdShowStrings = (string[])LcdBaseStrings.Clone();
             }
         }

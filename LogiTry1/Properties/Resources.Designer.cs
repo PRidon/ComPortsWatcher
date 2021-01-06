@@ -8,7 +8,7 @@
 // </auto-generated>
 //------------------------------------------------------------------------------
 
-namespace LogiTry1.Properties {
+namespace ComPortsWatcher.Properties {
     using System;
     
     
