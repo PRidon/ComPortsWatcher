@@ -1,8 +1,10 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.Drawing;
 using System.Threading;
 using System.Windows.Forms;
+using Tulpep.NotificationWindow;
 
 namespace ComPortsWatcher
 {
@@ -34,11 +36,33 @@ namespace ComPortsWatcher
             // Put the icon in the system tray and allow it react to mouse clicks.			
             m_ni.MouseClick += new MouseEventHandler(ni_MouseClick);
             m_ni.Icon = Icon.ExtractAssociatedIcon(Application.ExecutablePath); ;
-            m_ni.Text = "SpotifyStatusApplet";
+            m_ni.Text = "ComPortsWatcher";
             m_ni.Visible = true;
 
             // Attach a context menu.
             m_ni.ContextMenuStrip = new ContextMenu().Create();
+        }
+
+        public void UpdateMenuByPorts(List<string> ports)
+        {
+            //if (m_ni.ContextMenuStrip.InvokeRequired)
+            while (m_ni.ContextMenuStrip.Items.Count > 3)
+            {
+                m_ni.ContextMenuStrip.Items.RemoveAt(0);
+            }
+            foreach (string port in ports)
+            {
+
+                ToolStripMenuItem tool = new ToolStripMenuItem();
+                tool.Text = port;
+                m_ni.ContextMenuStrip.Items.Insert(0, tool);
+            }
+        }
+        public void ShowNotifier(string mess)
+        {
+            m_ni.BalloonTipText = mess;
+            m_ni.BalloonTipTitle = "New port available";
+            m_ni.ShowBalloonTip(1000);
         }
 
         public void Dispose()

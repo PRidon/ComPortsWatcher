@@ -23,7 +23,9 @@ namespace ComPortsWatcher
             ati.Start();
             LogitechGSDK LogitechLcd = new LogitechGSDK(null, null, null, null);
             ComPortSearcher PortsSearcher = new ComPortSearcher();
-            PortsSearcher.NewComPortEvent += LogitechLcd.LcdUpdate;
+            PortsSearcher.PortUpdateEvent += LogitechLcd.LcdUpdate;
+            PortsSearcher.PortUpdateEvent += ati.UpdateMenuByPorts;
+            PortsSearcher.NewPortEvent += ati.ShowNotifier;
 
             try
             {

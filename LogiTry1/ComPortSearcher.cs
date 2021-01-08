@@ -8,7 +8,8 @@ namespace ComPortsWatcher
 {
     public class ComPortSearcher : IDisposable
     {
-        public event Action<List<string>> NewComPortEvent;
+        public event Action<List<string>> PortUpdateEvent;
+        public event Action<string> NewPortEvent;
 
         private Thread PortSearchThread;
         private ManagementClass ComputerManagment;
@@ -24,8 +25,9 @@ namespace ComPortsWatcher
             PortSearchThread.Start();
         }
 
-        private int FindNewComPorts()
+        private bool CheckNewComPorts()
         {
+            bool isNewPortsExist = false;
             Ports = ComputerManagment.GetInstances();
             foreach (ManagementObject property in Ports)
             {
@@ -34,11 +36,15 @@ namespace ComPortsWatcher
                     {
                         string port = property.GetPropertyValue("Name").ToString();
                         //Console.WriteLine(property.GetPropertyValue("Name").ToString());
-                        if (ComPorts.IndexOf(port) < 0) ComPorts.Add(port);
+                        if (ComPorts.IndexOf(port) < 0)
+                        {
+                            ComPorts.Add(port);
+                            isNewPortsExist = true;
+                            NewPortEvent?.Invoke(port);
+                        }
                     }
             }
-            ComPorts = MoveComFirst(ComPorts);
-            return ComPorts.Count;
+            return isNewPortsExist;
         }
 
         private List<string> MoveComFirst(List<string> strs)
@@ -60,11 +66,16 @@ namespace ComPortsWatcher
             int portCnt = 0;
             while(true)
             {
-                if (portCnt != FindNewComPorts())
+                try
                 {
-                    portCnt = ComPorts.Count;
-                    NewComPortEvent?.Invoke(ComPorts);
+                    if (CheckNewComPorts())
+                    {
+                        portCnt = ComPorts.Count;
+                        PortUpdateEvent?.Invoke(MoveComFirst(ComPorts));
+                    }
                 }
+                catch (Exception)
+                { }
                 Thread.Sleep(3000);
             }
         }
