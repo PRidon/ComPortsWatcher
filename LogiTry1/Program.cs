@@ -1,14 +1,6 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Diagnostics;
-using System.IO;
-using System.Linq;
-using System.Management;
-using System.Reflection;
-using System.Text;
 using System.Threading;
-using System.Threading.Tasks;
-using System.Windows.Forms;
 
 namespace ComPortsWatcher
 {
@@ -19,22 +11,32 @@ namespace ComPortsWatcher
         static void Main(string[] args)
         {
             AppTrayIcon ati = new AppTrayIcon();
+            Action polling = null;
             ati.CloseTrayIconEvent += EndProgram;
             ati.Start();
-            LogitechGSDK LogitechLcd = new LogitechGSDK(null, null, null, null);
             ComPortSearcher PortsSearcher = new ComPortSearcher();
-            PortsSearcher.PortUpdateEvent += LogitechLcd.LcdUpdate;
+            //LogitechGSDK LogitechLcd = new LogitechGSDK(null, null, null, null);
+            //PortsSearcher.PortUpdateEvent += LogitechLcd.LcdUpdate;
+            try
+            {
+                LogitechGSDK LogitechLcd = new LogitechGSDK(null, null, null, null);
+                if (LogitechGSDK.LcdExist())
+                {
+                    polling = LogitechLcd.Polling;
+                    PortsSearcher.PortUpdateEvent += LogitechLcd.LcdUpdate;
+                }
+            }
+            catch (Exception)
+            { }
             PortsSearcher.PortUpdateEvent += ati.UpdateMenuByPorts;
             PortsSearcher.NewPortEvent += ati.ShowNotifier;
 
             try
             {
-                uint tte = 0;
                 IsRunnig = true;
                 do
                 {
-                    LogitechLcd.Polling();
-                    tte++;
+                    polling?.Invoke();
                     Thread.Sleep(33);
                 }
                 while (IsRunnig);
@@ -48,7 +50,6 @@ namespace ComPortsWatcher
             //LogitechGSDK.LogiLcdShutdown();
             //byte[] pixelMatrix = new byte[LogitechGSDK.LOGI_LCD_COLOR_WIDTH * LogitechGSDK.LOGI_LCD_COLOR_HEIGHT * 4];
             ////fill	this	array	with	your	image
-            //LogitechGSDK.LogiLcdColorSetBackground(pixelMatrix);
         }
 
         private static void EndProgram()

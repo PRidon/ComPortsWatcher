@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Management;
 using System.Threading;
 using System.Threading.Tasks;
@@ -28,6 +29,7 @@ namespace ComPortsWatcher
         private bool CheckNewComPorts()
         {
             bool isNewPortsExist = false;
+            List<string> comPorts = new List<string>();
             Ports = ComputerManagment.GetInstances();
             foreach (ManagementObject property in Ports)
             {
@@ -36,14 +38,20 @@ namespace ComPortsWatcher
                     {
                         string port = property.GetPropertyValue("Name").ToString();
                         //Console.WriteLine(property.GetPropertyValue("Name").ToString());
-                        if (ComPorts.IndexOf(port) < 0)
-                        {
-                            ComPorts.Add(port);
-                            isNewPortsExist = true;
-                            NewPortEvent?.Invoke(port);
-                        }
+                        comPorts.Add(port);
                     }
             }
+            // check com ports removing
+            List<string> diff = ComPorts.Except(comPorts).ToList();
+            if (diff.Count > 0) isNewPortsExist = true;
+            // check com ports adding
+            diff = comPorts.Except(ComPorts).ToList();
+            if (diff.Count > 0) isNewPortsExist = true;
+            foreach (string port in diff)
+            {
+                NewPortEvent?.Invoke(port);
+            }
+            ComPorts = comPorts;
             return isNewPortsExist;
         }
 

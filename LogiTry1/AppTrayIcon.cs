@@ -4,7 +4,6 @@ using System.Diagnostics;
 using System.Drawing;
 using System.Threading;
 using System.Windows.Forms;
-using Tulpep.NotificationWindow;
 
 namespace ComPortsWatcher
 {
@@ -45,23 +44,29 @@ namespace ComPortsWatcher
 
         public void UpdateMenuByPorts(List<string> ports)
         {
-            //if (m_ni.ContextMenuStrip.InvokeRequired)
-            while (m_ni.ContextMenuStrip.Items.Count > 3)
+            if (m_ni.ContextMenuStrip.InvokeRequired)
+                m_ni.ContextMenuStrip.Invoke(new Action<List<string>>(UpdateMenuByPorts), new object[] { ports });
+            else
             {
-                m_ni.ContextMenuStrip.Items.RemoveAt(0);
-            }
-            foreach (string port in ports)
-            {
+                while (m_ni.ContextMenuStrip.Items.Count > 3)
+                {
+                    m_ni.ContextMenuStrip.Items.RemoveAt(0);
+                }
+                foreach (string port in ports)
+                {
 
-                ToolStripMenuItem tool = new ToolStripMenuItem();
-                tool.Text = port;
-                m_ni.ContextMenuStrip.Items.Insert(0, tool);
+                    ToolStripMenuItem tool = new ToolStripMenuItem();
+                    tool.Text = port;
+                    m_ni.ContextMenuStrip.Items.Insert(0, tool);
+                }
             }
         }
         public void ShowNotifier(string mess)
         {
             m_ni.BalloonTipText = mess;
             m_ni.BalloonTipTitle = "New port available";
+            //m_ni.Icon = Properties.Resources.ComPortIcon;
+            m_ni.BalloonTipIcon = ToolTipIcon.Info;
             m_ni.ShowBalloonTip(1000);
         }
 
