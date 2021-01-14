@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Management;
 using System.Threading;
 using System.Threading.Tasks;
@@ -8,7 +9,8 @@ namespace ComPortsWatcher
 {
     public class ComPortSearcher : IDisposable
     {
-        public event Action<List<string>> NewComPortEvent;
+        public event Action<List<string>> PortUpdateEvent;
+        public event Action<string> NewPortEvent;
 
         private Thread PortSearchThread;
         private ManagementClass ComputerManagment;
@@ -24,8 +26,10 @@ namespace ComPortsWatcher
             PortSearchThread.Start();
         }
 
-        private int FindNewComPorts()
+        private bool CheckNewComPorts()
         {
+            bool isNewPortsExist = false;
+            List<string> comPorts = new List<string>();
             Ports = ComputerManagment.GetInstances();
             foreach (ManagementObject property in Ports)
             {
@@ -34,11 +38,21 @@ namespace ComPortsWatcher
                     {
                         string port = property.GetPropertyValue("Name").ToString();
                         //Console.WriteLine(property.GetPropertyValue("Name").ToString());
-                        if (ComPorts.IndexOf(port) < 0) ComPorts.Add(port);
+                        comPorts.Add(port);
                     }
             }
-            ComPorts = MoveComFirst(ComPorts);
-            return ComPorts.Count;
+            // check com ports removing
+            List<string> diff = ComPorts.Except(comPorts).ToList();
+            if (diff.Count > 0) isNewPortsExist = true;
+            // check com ports adding
+            diff = comPorts.Except(ComPorts).ToList();
+            if (diff.Count > 0) isNewPortsExist = true;
+            foreach (string port in diff)
+            {
+                NewPortEvent?.Invoke(port);
+            }
+            ComPorts = comPorts;
+            return isNewPortsExist;
         }
 
         private List<string> MoveComFirst(List<string> strs)
@@ -60,11 +74,16 @@ namespace ComPortsWatcher
             int portCnt = 0;
             while(true)
             {
-                if (portCnt != FindNewComPorts())
+                try
                 {
-                    portCnt = ComPorts.Count;
-                    NewComPortEvent?.Invoke(ComPorts);
+                    if (CheckNewComPorts())
+                    {
+                        portCnt = ComPorts.Count;
+                        PortUpdateEvent?.Invoke(MoveComFirst(ComPorts));
+                    }
                 }
+                catch (Exception)
+                { }
                 Thread.Sleep(3000);
             }
         }

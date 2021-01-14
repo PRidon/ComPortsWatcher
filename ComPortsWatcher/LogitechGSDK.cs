@@ -55,6 +55,11 @@ namespace ComPortsWatcher
             LcdShowStrings = new string[1];
         }
 
+        public static bool LcdExist()
+        {
+            return LogiLcdIsConnected(LOGI_LCD_TYPE_MONO);
+        }
+
         public void Polling()
         {
             Button0.CheckButton();
